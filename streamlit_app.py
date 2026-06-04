@@ -6,7 +6,7 @@ from huggingface_hub import HfFileSystem
 import config
 from us_calendar import next_trading_day
 
-st.set_page_config(page_title="TVP‑VAR with Stochastic Volatility", layout="wide")
+st.set_page_config(page_title="TVP-VAR with Stochastic Volatility", layout="wide")
 
 st.markdown("""
 <style>
@@ -32,19 +32,17 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown('<h1 style="text-align: center;">📈 TVP‑VAR with Stochastic Volatility</h1>', unsafe_allow_html=True)
-st.markdown('<p style="text-align: center;">Time‑varying parameter vector autoregression | Impulse response to macro shocks</p>', unsafe_allow_html=True)
+st.markdown('<h1 style="text-align: center;">📊 TVP-VAR with Stochastic Volatility</h1>', unsafe_allow_html=True)
+st.markdown('<p style="text-align: center;">Time‑varying impulse response to macro shocks | Forgetting factor recursive estimation</p>', unsafe_allow_html=True)
 
-st.sidebar.markdown("## 🧮 TVP‑VAR")
+st.sidebar.markdown("## 🧮 TVP-VAR")
 if st.sidebar.button("🔄 Refresh Data", use_container_width=True, type="primary"):
     st.cache_data.clear()
     st.rerun()
 
 st.sidebar.markdown(f"**Run Date:** `{st.session_state.get('run_date', 'Not loaded')}`")
 st.sidebar.markdown(f"**Next Trading Day:** `{next_trading_day()}`")
-st.sidebar.markdown(f"**VAR lags:** {config.VAR_LAG} | **Forgetting factor:** {config.FORGETTING_FACTOR}")
-st.sidebar.markdown(f"**Impulse horizon:** {config.IMPULSE_HORIZON} days")
-st.sidebar.markdown(f"**Shock variable:** {config.MACRO_VARS[0] if config.MACRO_VARS else 'VIX'}")
+st.sidebar.markdown(f"**Primary macro:** {config.PRIMARY_MACRO} | **Forgetting factor:** {config.LAMBDA}")
 
 OUTPUT_REPO = config.OUTPUT_REPO
 HF_TOKEN = config.HF_TOKEN
@@ -100,7 +98,7 @@ def display_universe(universe_name, uni_data, window_data, window_label):
             <div class="hero-card">
                 <h3>{etf['ticker']}</h3>
                 <p>Impulse response: {etf['tvp_score_norm']:.3f}</p>
-                <p style="font-size:0.9rem;">raw: {etf['raw_score']:.6f}</p>
+                <p style="font-size:0.9rem;">raw: {etf['raw_score']:.4f}</p>
             </div>
             """, unsafe_allow_html=True)
     with st.expander(f"Full ranking for {universe_name}"):
@@ -112,14 +110,13 @@ def display_universe(universe_name, uni_data, window_data, window_label):
 tab1, tab2 = st.tabs(["📊 Best Window (Auto)", "🔍 Choose Window (Manual)"])
 
 with tab1:
-    st.header("📈 Top ETFs by Impulse Response to Macro Shock (Auto Best Window)")
+    st.header("📊 Top ETFs by TVP-VAR Impulse Response (Auto Best Window)")
     with st.expander("📖 Interpretation", expanded=False):
         st.markdown("""
-        - **TVP‑VAR with stochastic volatility** allows coefficients and variance to change over time.
-        - We model the joint dynamics of ETF returns and macro variables (VIX, DXY, yields) as a VAR with time‑varying parameters.
-        - Coefficients are estimated recursively using exponential forgetting (adapts to regime changes).
-        - The score is the impulse response of the ETF to a one‑standard‑deviation shock in the primary macro variable (e.g., VIX) after 5 days.
-        - Positive response → ETF tends to benefit from a positive macro shock (e.g., rising VIX) under current regime.
+        - **TVP-VAR** models time‑varying coefficients with stochastic volatility.
+        - We estimate the impulse response of each ETF's return to a one‑unit shock in the primary macro variable (e.g., VIX).
+        - The score is the most recent coefficient of the macro shock in a recursive forgetting‑factor regression.
+        - Positive impulse response → ETF tends to rise after a positive macro shock (e.g., VIX increase).
         """)
     for universe_name, uni_data in data["universes"].items():
         if not uni_data or not uni_data.get("all_windows"):
@@ -138,7 +135,7 @@ with tab1:
 
 with tab2:
     st.header("🔍 Manual Window Selection")
-    st.markdown("Choose a rolling window to inspect the impulse response scores.")
+    st.markdown("Choose a rolling window to inspect the impulse responses.")
     for universe_name, uni_data in data["universes"].items():
         if not uni_data or not uni_data.get("all_windows"):
             st.warning(f"No window data for {universe_name}")
@@ -152,4 +149,4 @@ with tab2:
             st.warning("No data for selected window.")
 
 st.sidebar.markdown("---")
-st.sidebar.caption("TVP‑VAR | Time‑varying parameter VAR with stochastic volatility")
+st.sidebar.caption("TVP-VAR with Stochastic Volatility | Time‑varying impulse responses")
