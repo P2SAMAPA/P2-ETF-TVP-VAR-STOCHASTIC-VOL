@@ -1,14 +1,25 @@
 import numpy as np
 
-def tvp_var_score(returns, macro_shock, forgetting=0.96):
+def tvp_var_score(returns, shock_var=None, macro_shock=None, lambda_=None, forgetting=0.96):
     """
     Compute the time‑varying coefficient of a macro shock on ETF returns.
-    Uses recursive least squares with exponential forgetting (online estimation).
-    Returns the last coefficient (impulse response of return to macro shock).
+    Accepts either `shock_var` or `macro_shock` as the shock series.
+    `lambda_` is used as forgetting factor (1 - lambda_ is the forgetting rate).
     """
-    n = len(returns)
-    if n < 5:
+    # Handle lambda_ parameter
+    if lambda_ is not None:
+        forgetting = lambda_
+    # Determine the shock series
+    if shock_var is not None:
+        macro_shock = shock_var
+    if macro_shock is None or len(macro_shock) == 0:
         return 0.0
+    n = len(returns)
+    if n < 5 or len(macro_shock) < n:
+        return 0.0
+    # Align lengths
+    returns = returns[:n]
+    macro_shock = macro_shock[:n]
     # Create regressors: constant + lagged return (1 day) + macro shock (contemporaneous)
     X = np.column_stack([np.ones(n-1), returns[:-1], macro_shock[1:]])
     y = returns[1:]
@@ -26,5 +37,4 @@ def tvp_var_score(returns, macro_shock, forgetting=0.96):
         P = (P - np.outer(K, x @ P)) / forgetting
     # The coefficient for macro shock is beta[2]
     irf = beta[2] if len(beta) > 2 else 0.0
-    # Clip to reasonable range to avoid extreme values
     return float(np.clip(irf, -1.0, 1.0))
