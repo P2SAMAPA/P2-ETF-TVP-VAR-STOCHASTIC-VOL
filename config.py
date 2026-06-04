@@ -19,12 +19,14 @@ UNIVERSES = {
     ]
 }
 
-# Macro variables for the VAR (select subset for speed)
-MACRO_VARS = ["VIX", "DXY", "T10Y2Y"]   # reduced set for speed
+# Macro variables (all available)
+MACRO_VARS = [
+    "VIX", "DXY", "T10Y2Y", "TBILL_3M",
+    "DGS1MO", "DGS3MO", "DGS6MO", "DGS1", "DGS2", "DGS5", "DGS7",
+    "DGS10", "DGS20", "DGS30"
+]
 
-# VAR parameters
-VAR_LAG = 2                    # number of lags in VAR
-FORGETTING_FACTOR = 0.96       # exponential forgetting (1 = no forgetting)
-IMPULSE_HORIZON = 5            # days ahead for impulse response
-IMPULSE_SHOCK = 1.0            # shock size (in standard deviations of the macro)
+# TVP-VAR parameters
+PRIMARY_MACRO = "VIX"          # which macro to use for shock
+LAMBDA = 0.96                  # forgetting factor (exponential weighting)
 TOP_N = 3
